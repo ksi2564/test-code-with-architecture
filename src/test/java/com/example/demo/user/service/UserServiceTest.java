@@ -1,4 +1,4 @@
-package com.example.demo.service;
+package com.example.demo.user.service;
 
 import com.example.demo.common.domain.exception.CertificationCodeNotMatchedException;
 import com.example.demo.common.domain.exception.ResourceNotFoundException;
