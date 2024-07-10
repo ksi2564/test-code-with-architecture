@@ -1,28 +1,62 @@
 package com.example.demo.post.service;
 
+import com.example.demo.mock.FakePostRepository;
+import com.example.demo.mock.FakeUserRepository;
+import com.example.demo.mock.TestClockHolder;
 import com.example.demo.post.domain.Post;
 import com.example.demo.post.domain.PostCreate;
 import com.example.demo.post.domain.PostUpdate;
-import com.example.demo.post.infrastructure.PostEntity;
+import com.example.demo.user.domain.User;
+import com.example.demo.user.domain.UserStatus;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlGroup;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@TestPropertySource("classpath:test-application.properties")
-@SqlGroup({
-        @Sql(value = "/sql/post-service-test-data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
-        @Sql(value = "/sql/delete-all-data.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-})
 class PostServiceTest {
-    @Autowired
+
     private PostService postService;
+
+    @BeforeEach
+    void init() {
+        FakePostRepository fakePostRepository = new FakePostRepository();
+        FakeUserRepository fakeUserRepository = new FakeUserRepository();
+        postService = PostService.builder()
+                .postRepository(fakePostRepository)
+                .userRepository(fakeUserRepository)
+                .clockHolder(new TestClockHolder(1678530673958L))
+                .build();
+
+        User user1 = User.builder()
+                .id(1L)
+                .email("test@test.com")
+                .nickname("test nickname")
+                .address("test address")
+                .certificationCode("aaaa-aaaa-aaaa-aaaa")
+                .status(UserStatus.ACTIVE)
+                .lastLoginAt(100L)
+                .build();
+
+        User user2 = User.builder()
+                .id(2L)
+                .email("test2@test.com")
+                .nickname("test nickname2")
+                .address("test address2")
+                .certificationCode("aaaa-aaaa-aaaa-bbbb")
+                .status(UserStatus.PENDING)
+                .lastLoginAt(200L)
+                .build();
+
+        fakeUserRepository.save(user1);
+        fakeUserRepository.save(user2);
+        fakePostRepository.save(Post.builder()
+                .id(1L)
+                .content("test content1")
+                .createdAt(1678530673958L)
+                .modifiedAt(1678530673958L)
+                .writer(user1)
+                .build());
+    }
 
     @Test
     void getById_는_존재하는_게시물을_내려준다() {
@@ -49,7 +83,7 @@ class PostServiceTest {
         // then
         assertThat(result.getId()).isNotNull();
         assertThat(result.getContent()).isEqualTo("test content2");
-        assertThat(result.getCreatedAt()).isGreaterThan(0L);
+        assertThat(result.getCreatedAt()).isEqualTo(1678530673958L);
     }
 
     @Test
@@ -65,6 +99,6 @@ class PostServiceTest {
         // then
         Post post = postService.getById(1);
         assertThat(post.getContent()).isEqualTo("updated test content1");
-        assertThat(post.getModifiedAt()).isGreaterThan(0L);
+        assertThat(post.getModifiedAt()).isEqualTo(1678530673958L);
     }
 }
